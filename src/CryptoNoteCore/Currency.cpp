@@ -133,6 +133,12 @@ namespace CryptoNote {
 		{
 			baseReward = CryptoNote::parameters::TAIL_EMISSION_REWARD;
 		}
+		
+		//arreglado concensado por los actuales mineros debido a un error de capa 8
+		if( alreadyGeneratedCoins >= 312824207175783 && alreadyGeneratedCoins <= 312825207175783)
+		{
+			baseReward = 28324480147;
+		}
 
 		size_t blockGrantedFullRewardZone = blockGrantedFullRewardZoneByBlockVersion(blockMajorVersion);
 		medianSize = std::max(medianSize, blockGrantedFullRewardZone);
@@ -436,9 +442,9 @@ namespace CryptoNote {
 			uint64_t nextDiffZ = low / timeSpan;
 
 			// minimum limit
-			if (nextDiffZ <= 100000) {
-				nextDiffZ = 100000;
-			}
+			//if (nextDiffZ <= 100000) {
+			//	nextDiffZ = 100000;
+			//}
 
 			return nextDiffZ;
 
