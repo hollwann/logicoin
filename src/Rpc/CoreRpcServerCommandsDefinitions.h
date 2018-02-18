@@ -468,7 +468,7 @@ std::string hash;
   uint64_t fee;
   uint64_t amount_out;
   uint64_t size;
-  time_t receiveTime;
+  uint64_t receiveTime;
   bool keptByBlock;
   uint32_t max_used_block_height;
   std::string max_used_block_id;
