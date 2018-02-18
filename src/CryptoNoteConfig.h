@@ -106,10 +106,9 @@ const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          //
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "8f80f9a5a434a9f1510d13336228debfee9c918ce505efe225d8c94d045fa115";
 
 const char* const SEED_NODES[] = { 
-  "35.224.171.78:1337",
+  "nodo.logicoin.co",
   "35.229.60.121:1337",
   "35.199.63.34:1337",
-  "35.199.169.2:1337",
 };
 
 struct CheckpointData {
@@ -118,7 +117,7 @@ struct CheckpointData {
 };
 
 const std::initializer_list<CheckpointData> CHECKPOINTS = { 
-
+{5467,	"bf700efee4d3311e3038dbdaa8382802b14f52f5d8ac190ac45639b2fc30f346}
 };
 
 } // CryptoNote
