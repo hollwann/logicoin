@@ -1853,15 +1853,20 @@ std::string simple_wallet::getFeeAddress() {
   HttpResponse res;
 
   req.setUrl("/feeaddress");
-  httpClient.request(req, res);
+	 try {
+ 	  httpClient.request(req, res);
+   }
+   catch (const std::exception& e) {
+ 	  fail_msg_writer() << "Error conectando al nodo remoto: " << e.what();
+   }
 
   if (res.getStatus() != HttpResponse::STATUS_200) {
-    throw std::runtime_error("Codigo devuelto del servidor remoto " + std::to_string(res.getStatus()));
+    fail_msg_writer() << "Nodo remoto retorno el codigo " + std::to_string(res.getStatus());
   }
 
   std::string address;
   if (!processServerFeeAddressResponse(res.getBody(), address)) {
-    throw std::runtime_error("Error al analizar la respuesta del servidor");
+    fail_msg_writer() << "Error al analizar la respuesta del servidor";
   }
 
   return address;
