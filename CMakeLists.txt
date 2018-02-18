@@ -467,7 +467,7 @@ else()
   endif()
 endif()
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE AND NOT ANDROID)
     set(CMAKE_EXE_LINKER_FLAGS "-pthread")
 endif()
 
