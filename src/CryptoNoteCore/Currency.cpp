@@ -133,11 +133,14 @@ namespace CryptoNote {
 		{
 			baseReward = CryptoNote::parameters::TAIL_EMISSION_REWARD;
 		}
-		
-		//arreglado concensado por los actuales mineros debido a un error de capa 8
-		if( alreadyGeneratedCoins >= 312824207175783 && alreadyGeneratedCoins <= 312825207175783)
+		//arreglo concensado por los actuales mineros debido a un error de capa 8 en el bloque 33326
+		else if( alreadyGeneratedCoins >= 312824207175783 && alreadyGeneratedCoins <= 312825207175783)
 		{
-			baseReward = 28324480147;
+			baseReward =   8324469147;
+		}
+		else if(alreadyGeneratedCoins >= 312831531644930 && alreadyGeneratedCoins <=   312833531644930)
+		{
+			baseReward =    9150219502;
 		}
 
 		size_t blockGrantedFullRewardZone = blockGrantedFullRewardZoneByBlockVersion(blockMajorVersion);
@@ -155,6 +158,7 @@ namespace CryptoNote {
 
 		emissionChange = penalizedBaseReward - (fee - penalizedFee);
 		reward = penalizedBaseReward + penalizedFee;
+		
 
 		return true;
 	}
