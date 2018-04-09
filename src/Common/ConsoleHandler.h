@@ -11,6 +11,9 @@
 
 #include "BlockingQueue.h"
 #include "ConsoleTools.h"
+#ifndef _WIN32
+#include <sys/select.h>
+#endif 
 
 namespace Common {
 
@@ -25,6 +28,8 @@ public:
   bool getline(std::string& line);
   void stop();
   bool stopped() const;
+  void pause();
+  void unpause();
 
 private:
 
@@ -51,7 +56,9 @@ public:
 
   void start(bool startThread = true, const std::string& prompt = "", Console::Color promptColor = Console::Color::Default);
   void stop();
-  void wait(); 
+  void wait();
+  void pause();
+  void unpause();  
 
 private:
 

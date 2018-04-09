@@ -9,6 +9,9 @@
 #include "Rpc/JsonRpc.h"
 #include "WalletLegacy/WalletHelper.h"
 #include "WalletLegacy/WalletLegacy.h"
+#include "Common/StringTools.h"
+#include <Common/Base58.h>
+#include "Common/Util.h"
 // #include "wallet_errors.h"
 
 using namespace Logging;
@@ -110,6 +113,7 @@ void wallet_rpc_server::processRequest(const CryptoNote::HttpRequest& request, C
 			{ "getbalance"	 , makeMemberMethod(&wallet_rpc_server::on_getbalance)		},
 			{ "transfer"	 , makeMemberMethod(&wallet_rpc_server::on_transfer)		},
 			{ "store"		 , makeMemberMethod(&wallet_rpc_server::on_store)			},
+			{ "stop_wallet"  , makeMemberMethod(&wallet_rpc_server::on_stop_wallet)		},
 			{ "get_payments" , makeMemberMethod(&wallet_rpc_server::on_get_payments)	},
 			{ "get_transfers", makeMemberMethod(&wallet_rpc_server::on_get_transfers)	},
 			{ "get_height"	 , makeMemberMethod(&wallet_rpc_server::on_get_height)		},
@@ -273,6 +277,14 @@ bool wallet_rpc_server::on_get_transfers(const wallet_rpc::COMMAND_RPC_GET_TRANS
 {
 	res.transfers.clear();
 	size_t transactionsCount = m_wallet.getTransactionCount();
+	uint64_t bc_height;
+	try {
+		bc_height = m_node.getKnownBlockCount();
+	}
+	catch (std::exception &e) {
+		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR, std::string("Failed to get blockchain height: ") + e.what());
+	}
+
 	for (size_t trantransactionNumber = 0; trantransactionNumber < transactionsCount; ++trantransactionNumber)
 	{
 		WalletLegacyTransaction txInfo;
@@ -299,6 +311,7 @@ bool wallet_rpc_server::on_get_transfers(const wallet_rpc::COMMAND_RPC_GET_TRANS
 		transfer.blockIndex		 = txInfo.blockHeight;
 		transfer.unlockTime		 = txInfo.unlockTime;
 		transfer.paymentId		 = "";
+		transfer.confirmations = bc_height - txInfo.blockHeight;
 
 		std::vector<uint8_t> extraVec;
 		extraVec.reserve(txInfo.extra.size());
@@ -329,11 +342,17 @@ bool wallet_rpc_server::on_get_address(const wallet_rpc::COMMAND_RPC_GET_ADDRESS
 bool wallet_rpc_server::on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req,
 	wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res)
 {
-	if (0 != req.key_type.compare("mnemonic"))
+	if (0 != req.key_type.compare("mnemonic") && 0 != req.key_type.compare("paperwallet"))
 		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR, std::string("Unsupported key_type ") + req.key_type);
 
-	if (!m_wallet.getSeed(res.key))
+	if (0 == req.key_type.compare("mnemonic") && !m_wallet.getSeed(res.key))
 		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR, std::string("The wallet is non-deterministic. Cannot display seed."));
+	if (0 == req.key_type.compare("paperwallet")) {
+		AccountKeys keys;
+		m_wallet.getAccountKeys(keys);
+		res.key = Tools::Base58::encode_addr(parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
+			std::string(reinterpret_cast<char*>(&keys), sizeof(keys)));
+	}
 	return true;
 }
 
@@ -342,6 +361,33 @@ bool wallet_rpc_server::on_reset(const wallet_rpc::COMMAND_RPC_RESET::request& r
 	wallet_rpc::COMMAND_RPC_RESET::response& res)
 {
 	m_wallet.reset();
+	return true;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+bool wallet_rpc_server::on_stop_wallet(const wallet_rpc::COMMAND_RPC_STOP::request& req, wallet_rpc::COMMAND_RPC_STOP::response& res) {
+	try {
+		WalletHelper::storeWallet(m_wallet, m_walletFilename);
+	}
+	catch (std::exception& e) {
+		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR, std::string("Couldn't save wallet: ") + e.what());
+	}
+	wallet_rpc_server::send_stop_signal();
+	return true;
+}
+//------------------------------------------------------------------------------------------------------------------------------
+
+bool wallet_rpc_server::on_gen_paymentid(const wallet_rpc::COMMAND_RPC_GEN_PAYMENT_ID::request& req,
+	wallet_rpc::COMMAND_RPC_GEN_PAYMENT_ID::response& res)
+{
+	std::string pid;
+	try {
+		pid = Common::podToHex(Crypto::rand<Crypto::Hash>());
+	}
+	catch (const std::exception& e) {
+		throw JsonRpc::JsonRpcError(WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR, std::string("Internal error: can't generate Payment ID: ") + e.what());
+	}
+	res.payment_id = pid;
 	return true;
 }
 

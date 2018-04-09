@@ -22,7 +22,7 @@ using namespace Crypto;
 
 namespace {
 
-const uint64_t ACCOUN_CREATE_TIME_ACCURACY = 24 * 60 * 60;
+const uint64_t ACCOUNT_CREATE_TIME_ACCURACY = 24 * 60 * 60;
 
 void throwNotDefined() {
   throw std::runtime_error("The behavior is not defined!");
@@ -200,7 +200,7 @@ void WalletLegacy::initWithKeys(const AccountKeys& accountKeys, const std::strin
     }
 
     m_account.setAccountKeys(accountKeys);
-    m_account.set_createtime(ACCOUN_CREATE_TIME_ACCURACY);
+    m_account.set_createtime(ACCOUNT_CREATE_TIME_ACCURACY);
     m_password = password;
 
     initSync();
@@ -229,7 +229,7 @@ void WalletLegacy::initSync() {
   sub.keys = reinterpret_cast<const AccountKeys&>(m_account.getAccountKeys());
   sub.transactionSpendableAge = 1;
   sub.syncStart.height = 0;
-  sub.syncStart.timestamp = m_account.get_createtime() - ACCOUN_CREATE_TIME_ACCURACY;
+  sub.syncStart.timestamp = m_account.get_createtime() - ACCOUNT_CREATE_TIME_ACCURACY;
   
   auto& subObject = m_transfersSync.addSubscription(sub);
   m_transferDetails = &subObject.getContainer();

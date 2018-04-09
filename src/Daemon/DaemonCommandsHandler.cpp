@@ -25,6 +25,7 @@ DaemonCommandsHandler::DaemonCommandsHandler(CryptoNote::core& core, CryptoNote:
   m_consoleHandler.setHandler("print_pl", boost::bind(&DaemonCommandsHandler::print_pl, this, _1), "Imprimir lista de pares");
   m_consoleHandler.setHandler("print_cn", boost::bind(&DaemonCommandsHandler::print_cn, this, _1), "Imprimir conexiones");
   m_consoleHandler.setHandler("print_bc", boost::bind(&DaemonCommandsHandler::print_bc, this, _1), "Imprimir informacion de blockchain en un rango de bloques dado, print_bc <inicio> [<fin>]");
+  m_consoleHandler.setHandler("height", boost::bind(&DaemonCommandsHandler::print_height, this, _1), "Imprime la altura del blockchain");
   //m_consoleHandler.setHandler("print_bci", boost::bind(&DaemonCommandsHandler::print_bci, this, _1));
   //m_consoleHandler.setHandler("print_bc_outs", boost::bind(&DaemonCommandsHandler::print_bc_outs, this, _1));
   m_consoleHandler.setHandler("print_block", boost::bind(&DaemonCommandsHandler::print_block, this, _1), "Imprimir bloque, print_block <block_hash> | <block_height>");
@@ -33,10 +34,15 @@ DaemonCommandsHandler::DaemonCommandsHandler(CryptoNote::core& core, CryptoNote:
   m_consoleHandler.setHandler("stop_mining", boost::bind(&DaemonCommandsHandler::stop_mining, this, _1), "Deja de minar");
   m_consoleHandler.setHandler("print_pool", boost::bind(&DaemonCommandsHandler::print_pool, this, _1), "Imprimir grupo de transacciones (formato largo)");
   m_consoleHandler.setHandler("print_pool_sh", boost::bind(&DaemonCommandsHandler::print_pool_sh, this, _1), "Imprimir grupo de transacciones (formato corto)");
+  m_consoleHandler.setHandler("print_mp", boost::bind(&DaemonCommandsHandler::print_pool_count, this, _1), "Imprime el numero de transacciones en memoria"); 
   m_consoleHandler.setHandler("show_hr", boost::bind(&DaemonCommandsHandler::show_hr, this, _1), "Comience a mostrar la tasa de hash");
   m_consoleHandler.setHandler("hide_hr", boost::bind(&DaemonCommandsHandler::hide_hr, this, _1), "Dejar de mostrar la tasa de hash");
   m_consoleHandler.setHandler("set_log", boost::bind(&DaemonCommandsHandler::set_log, this, _1), "set_log <level> - Cambiar el nivel de registro actual, <level> es un numero entre 0-4");
-}
+  m_consoleHandler.setHandler("print_diff", boost::bind(&DaemonCommandsHandler::print_diff, this, _1), "Dificultad para el siguiente bloque");
+  m_consoleHandler.setHandler("print_ban", boost::bind(&DaemonCommandsHandler::print_ban, this, _1), "Imprimir nodos baneados");
+  m_consoleHandler.setHandler("ban", boost::bind(&DaemonCommandsHandler::ban, this, _1), "Banea una ip por una cantidad de segundos, ban <IP> [<segundos>]");
+  m_consoleHandler.setHandler("unban", boost::bind(&DaemonCommandsHandler::unban, this, _1), "Quita el ban a una IP, unban <IP>");
+  }
 
 //--------------------------------------------------------------------------------
 std::string DaemonCommandsHandler::get_commands_str()
@@ -138,6 +144,11 @@ bool DaemonCommandsHandler::print_bc(const std::vector<std::string> &args) {
   }
 
   m_core.print_blockchain(start_index, end_index);
+  return true;
+}
+//--------------------------------------------------------------------------------
+bool DaemonCommandsHandler::print_height(const std::vector<std::string> &args) {
+  logger(Logging::INFO) << "Height: " << m_core.get_current_blockchain_height() << std::endl;
   return true;
 }
 //--------------------------------------------------------------------------------
@@ -273,6 +284,18 @@ bool DaemonCommandsHandler::print_pool_sh(const std::vector<std::string>& args)
   return true;
 }
 //--------------------------------------------------------------------------------
+bool DaemonCommandsHandler::print_diff(const std::vector<std::string>& args)
+{
+  logger(Logging::INFO) << "Dificultad del siguiente bloque: " << m_core.getNextBlockDifficulty() << std::endl;
+  return true;
+}
+//--------------------------------------------------------------------------------
+bool DaemonCommandsHandler::print_pool_count(const std::vector<std::string>& args)
+{
+  logger(Logging::INFO) << "Transacciones pendientes en memoria: " << m_core.get_pool_transactions_count() << std::endl;
+  return true;
+}
+//--------------------------------------------------------------------------------
 bool DaemonCommandsHandler::start_mining(const std::vector<std::string> &args) {
   if (!args.size()) {
     std::cout << "Por favor, especifique la direccion de la billetera para minar: start_mining <addr> [threads=1]" << std::endl;
@@ -299,4 +322,47 @@ bool DaemonCommandsHandler::start_mining(const std::vector<std::string> &args) {
 bool DaemonCommandsHandler::stop_mining(const std::vector<std::string>& args) {
   m_core.get_miner().stop();
   return true;
+}
+
+//--------------------------------------------------------------------------------
+bool DaemonCommandsHandler::print_ban(const std::vector<std::string>& args) {
+  m_srv.log_banlist();
+  return true;
+}
+
+bool DaemonCommandsHandler::ban(const std::vector<std::string>& args)
+{
+  if (args.size() != 1 && args.size() != 2) return false;
+  std::string addr = args[0];
+  uint32_t ip;
+  time_t seconds;
+  if (args.size() > 1) {
+    try {
+      seconds = std::stoi(args[1]);
+    } catch (const std::exception &e) {
+      return false;
+    }
+    if (seconds == 0) {
+      return false;
+    }
+  } 
+  try {
+    ip = Common::stringToIpAddress(addr);
+  } catch (const std::exception &e) {
+     return false;
+  }
+  return m_srv.ban_host(ip, seconds);
+}
+
+bool DaemonCommandsHandler::unban(const std::vector<std::string>& args)
+{
+  if (args.size() != 1) return false;
+  std::string addr = args[0];
+  uint32_t ip;
+  try {
+    ip = Common::stringToIpAddress(addr);
+  }	catch (const std::exception &e) {
+    return false;
+  }
+  return m_srv.unban_host(ip);
 }

@@ -241,7 +241,7 @@ int CryptoNoteProtocolHandler::handle_notify_new_block(int command, NOTIFY_NEW_B
     m_core.handle_incoming_tx(transactionBinary, tvc, true);
     if (tvc.m_verifivation_failed) {
       logger(Logging::INFO) << context << "Block verification failed: transaction verification failed, dropping connection";
-      context.m_state = CryptoNoteConnectionContext::state_shutdown;
+      m_p2p->drop_connection(context, true);
       return 1;
     }
   }
@@ -250,7 +250,7 @@ int CryptoNoteProtocolHandler::handle_notify_new_block(int command, NOTIFY_NEW_B
   m_core.handle_incoming_block_blob(asBinaryArray(arg.b.block), bvc, true, false);
   if (bvc.m_verifivation_failed) {
     logger(Logging::DEBUGGING) << context << "Block verification failed, dropping connection";
-    context.m_state = CryptoNoteConnectionContext::state_shutdown;
+     m_p2p->drop_connection(context, true);
     return 1;
   }
   if (bvc.m_added_to_main_chain) {

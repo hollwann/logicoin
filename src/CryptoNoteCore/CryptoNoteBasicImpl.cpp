@@ -33,7 +33,11 @@ namespace CryptoNote {
     }
 
     uint64_t productHi;
-    uint64_t productLo = mul128(amount, currentBlockSize * (UINT64_C(2) * medianSize - currentBlockSize), &productHi);
+    //uint64_t productLo = mul128(amount, currentBlockSize * (UINT64_C(2) * medianSize - currentBlockSize), &productHi);
+    //BUGFIX by Monero Project: 32-bit saturation bug (e.g. ARM7), the result was being treated as 32-bit by default
+    uint64_t multiplicand = UINT64_C(2) * medianSize - currentBlockSize;
+    multiplicand *= currentBlockSize;
+    uint64_t productLo = mul128(amount, multiplicand, &productHi);
 
     uint64_t penalizedAmountHi;
     uint64_t penalizedAmountLo;
