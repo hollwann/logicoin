@@ -1,4 +1,19 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers, The Karbowanec developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Core.h"
 
@@ -7,6 +22,7 @@
 #include "../CryptoNoteConfig.h"
 #include "../Common/CommandLine.h"
 #include "../Common/Util.h"
+#include "../Common/Math.h"
 #include "../Common/StringTools.h"
 #include "../crypto/crypto.h"
 #include "../CryptoNoteProtocol/CryptoNoteProtocolDefinitions.h"
@@ -214,6 +230,51 @@ bool core::get_stat_info(core_stat_info& st_inf) {
   return true;
 }
 
+bool core::check_tx_mixin(const Transaction& tx) {
+  size_t inputIndex = 0;
+  for (const auto& txin : tx.inputs) {
+    assert(inputIndex < tx.signatures.size());
+    if (txin.type() == typeid(KeyInput)) {
+      uint64_t txMixin = boost::get<KeyInput>(txin).outputIndexes.size();
+      if (txMixin > CryptoNote::parameters::MAX_TX_MIXIN_SIZE) {
+        logger(ERROR) << "Transaction " << getObjectHash(tx) << " has too large mixin count, rejected";
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool core::check_tx_fee(const Transaction& tx, size_t blobSize, tx_verification_context& tvc) {
+	uint64_t inputs_amount = 0;
+	if (!get_inputs_money_amount(tx, inputs_amount)) {
+		tvc.m_verifivation_failed = true;
+		return false;
+	}
+
+	uint64_t outputs_amount = get_outs_money_amount(tx);
+
+	if (outputs_amount > inputs_amount) {
+		logger(DEBUGGING) << "transaction use more money then it has: use " << m_currency.formatAmount(outputs_amount) <<
+			", have " << m_currency.formatAmount(inputs_amount);
+		tvc.m_verifivation_failed = true;
+		return false;
+	}
+
+	Crypto::Hash h = NULL_HASH;
+	getObjectHash(tx, h, blobSize);
+	const uint64_t fee = inputs_amount - outputs_amount;
+	bool isFusionTransaction = fee == 0 && m_currency.isFusionTransaction(tx, blobSize);
+	if (!isFusionTransaction && fee < m_currency.minimumFee()) {
+		logger(DEBUGGING) << "transaction fee is not enough: " << m_currency.formatAmount(fee) <<
+			", minimum fee: " << m_currency.formatAmount(m_currency.minimumFee());
+		tvc.m_verifivation_failed = true;
+		tvc.m_tx_fee_too_small = true;
+		return false;
+	}
+
+	return true;
+}
 
 bool core::check_tx_semantic(const Transaction& tx, bool keeped_by_block) {
   if (!tx.inputs.size()) {
@@ -365,6 +426,21 @@ bool core::get_block_template(Block& b, const AccountPublicAddress& adr, difficu
 
     b.previousBlockHash = get_tail_id();
     b.timestamp = time(NULL);
+
+    // Don't generate a block template with invalid timestamp
+    // Fix by Jagerman
+    // https://github.com/graft-project/GraftNetwork/pull/118/commits
+
+    if(height >= m_currency.timestampCheckWindow()) {
+      std::vector<uint64_t> timestamps;
+      for(size_t offset = height - m_currency.timestampCheckWindow(); offset < height; ++offset) {
+        timestamps.push_back(m_blockchain.getBlockTimestamp(offset));
+      }
+      uint64_t median_ts = Common::medianValue(timestamps);
+      if (b.timestamp < median_ts) {
+          b.timestamp = median_ts;
+      }
+    }
 
     median_size = m_blockchain.getCurrentCumulativeBlocksizeLimit() / 2;
     already_generated_coins = m_blockchain.getCoinsInCirculation();
@@ -990,6 +1066,20 @@ bool core::handleIncomingTransaction(const Transaction& tx, const Crypto::Hash& 
     logger(INFO) << "WRONG TRANSACTION BLOB, Failed to check tx " << txHash << " syntax, rejected";
     tvc.m_verifivation_failed = true;
     return false;
+  }
+
+  // is in checkpoint zone
+  if (!m_blockchain.isInCheckpointZone(get_current_blockchain_height())) {
+	  if (!check_tx_fee(tx, blobSize, tvc)) {
+		  tvc.m_verifivation_failed = true;
+		  return false;
+	  }
+
+	  if (!check_tx_mixin(tx)) {
+		  logger(INFO) << "Transaction verification failed: mixin count for transaction " << txHash << " is too large, rejected";
+		  tvc.m_verifivation_failed = true;
+		  return false;
+	  }
   }
 
   if (!check_tx_semantic(tx, keptByBlock)) {

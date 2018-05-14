@@ -1,4 +1,21 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+// Copyright(c) 2014 - 2017 XDN - project developers
+// Copyright(c) 2018 The Karbo developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "PaymentServiceConfiguration.h"
 
@@ -7,6 +24,7 @@
 #include <boost/program_options.hpp>
 
 #include "Logging/ILogger.h"
+#include "SimpleWallet/PasswordContainer.cpp"
 
 namespace po = boost::program_options;
 
@@ -31,9 +49,9 @@ void Configuration::initOptions(boost::program_options::options_description& des
   desc.add_options()
       ("bind-address", po::value<std::string>()->default_value("127.0.0.1"), "payment service bind address")
       ("bind-port", po::value<uint16_t>()->default_value(8070), "payment service bind port")
-      ("rpc-user", po::value<std::string>(), "Nombre de usuario para usar con el servidor RPC. Si está vacío, no se realizará ninguna autorización del servidor")
-      ("rpc-password", po::value<std::string>(), "Contraseña para usar con el servidor RPC. Si está vacío, no se realizará ninguna autorización del servidor")
-	  ("container-file,w", po::value<std::string>(), "container file")
+      ("rpc-user", po::value<std::string>(), "Username to use with the RPC server. If empty, no server authorization will be done")
+      ("rpc-password", po::value<std::string>(), "Password to use with the RPC server. If empty, no server authorization will be done")
+      ("container-file,w", po::value<std::string>(), "container file")
       ("container-password,p", po::value<std::string>(), "container password")
       ("generate-container,g", "generate new container file with one wallet and exit")
       ("daemon,d", "run as daemon in Unix or as service in Windows")
@@ -91,8 +109,8 @@ void Configuration::init(const boost::program_options::variables_map& options) {
   if (options.count("bind-port") != 0 && (!options["bind-port"].defaulted() || bindPort == 0)) {
     bindPort = options["bind-port"].as<uint16_t>();
   }
-  
-   if (options.count("rpc-user") != 0) {
+
+  if (options.count("rpc-user") != 0) {
     m_rpcUser = options["rpc-user"].as<std::string>();
   }
 
@@ -117,9 +135,15 @@ void Configuration::init(const boost::program_options::variables_map& options) {
   }
 
   if (!registerService && !unregisterService) {
-    if (containerFile.empty() || containerPassword.empty()) {
+    if (containerFile.empty() && containerPassword.empty()) {
       throw ConfigurationError("Both container-file and container-password parameters are required");
     }
+	if (containerPassword.empty()) {
+		if (pwd_container.read_password()) {
+			containerPassword = pwd_container.password();
+		}
+	}
+
   }
 }
 

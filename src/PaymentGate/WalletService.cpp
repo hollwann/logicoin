@@ -1,4 +1,19 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "WalletService.h"
 
@@ -30,6 +45,9 @@
 #include "Wallet/WalletErrors.h"
 #include "Wallet/WalletUtils.h"
 #include "WalletServiceErrorCategory.h"
+#include "ITransfersContainer.h"
+
+using namespace CryptoNote;
 
 namespace PaymentService {
 
@@ -174,10 +192,9 @@ std::vector<CryptoNote::TransactionsInBlockInfo> filterTransactions(
       }
     }
 
-    result.push_back(std::move(item));
-	if (!block.transactions.empty()) {
-       result.push_back(std::move(item));
-     }
+    if (!block.transactions.empty()) {
+      result.push_back(std::move(item));
+    }
   }
 
   return result;
@@ -452,7 +469,7 @@ std::error_code WalletService::createAddress(const std::string& spendSecretKeyTe
       return make_error_code(CryptoNote::error::WalletServiceErrorCode::WRONG_KEY_FORMAT);
     }
 
-    address = wallet.createAddress(secretKey, reset);
+	address = wallet.createAddress(secretKey, reset);
   } catch (std::system_error& x) {
     logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Error while creating address: " << x.what();
     return x.code();
@@ -661,8 +678,8 @@ std::error_code WalletService::getTransactions(const std::vector<std::string>& a
 
 	std::vector<TransactionsInBlockRpcInfo> txs = getRpcTransactions(blockHash, blockCount, transactionFilter);
 	for (TransactionsInBlockRpcInfo& b : txs){
-		for (TransactionRpcInfo& t : b.transactions){
-			t.confirmations = wallet.getBlockCount() - t.blockIndex;
+		for (TransactionRpcInfo& t : b.transactions) {
+			t.confirmations = (t.blockIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX ? wallet.getBlockCount() - t.blockIndex : 0);
 		}
 	}
 	transactions = txs;
@@ -691,8 +708,8 @@ std::error_code WalletService::getTransactions(const std::vector<std::string>& a
 
 	std::vector<TransactionsInBlockRpcInfo> txs = getRpcTransactions(firstBlockIndex, blockCount, transactionFilter);
 	for (TransactionsInBlockRpcInfo& b : txs){
-		for (TransactionRpcInfo& t : b.transactions){
-			t.confirmations = wallet.getBlockCount() - t.blockIndex;
+		for (TransactionRpcInfo& t : b.transactions) {
+			t.confirmations = (t.blockIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX ? wallet.getBlockCount() - t.blockIndex : 0);
 		}
 	}
 	transactions = txs;
@@ -720,7 +737,7 @@ std::error_code WalletService::getTransaction(const std::string& transactionHash
     }
 
 	TransactionRpcInfo tempTrans = convertTransactionWithTransfersToTransactionRpcInfo(transactionWithTransfers);
-	tempTrans.confirmations = wallet.getBlockCount() - transactionWithTransfers.transaction.blockHeight;
+	tempTrans.confirmations = (transactionWithTransfers.transaction.blockHeight != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX ? wallet.getBlockCount() - transactionWithTransfers.transaction.blockHeight : 0);
 	transaction = tempTrans;
 
   } catch (std::system_error& x) {

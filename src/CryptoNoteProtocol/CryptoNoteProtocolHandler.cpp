@@ -1,4 +1,21 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Forknote project
+// Copyright (c) 2016-2018, The Karbowanec developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "CryptoNoteProtocolHandler.h"
 
@@ -250,7 +267,7 @@ int CryptoNoteProtocolHandler::handle_notify_new_block(int command, NOTIFY_NEW_B
   m_core.handle_incoming_block_blob(asBinaryArray(arg.b.block), bvc, true, false);
   if (bvc.m_verifivation_failed) {
     logger(Logging::DEBUGGING) << context << "Block verification failed, dropping connection";
-     m_p2p->drop_connection(context, true);
+    m_p2p->drop_connection(context, true);
     return 1;
   }
   if (bvc.m_added_to_main_chain) {
@@ -286,7 +303,7 @@ int CryptoNoteProtocolHandler::handle_notify_new_transactions(int command, NOTIF
     CryptoNote::tx_verification_context tvc = boost::value_initialized<decltype(tvc)>();
     m_core.handle_incoming_tx(transactionBinary, tvc, false);
     if (tvc.m_verifivation_failed) {
-      logger(Logging::INFO) << context << "Tx verification failed";
+      logger(Logging::DEBUGGING) << context << "Tx verification failed";
     }
     if (!tvc.m_verifivation_failed && tvc.m_should_be_relayed) {
       ++tx_blob_it;

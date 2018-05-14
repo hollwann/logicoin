@@ -1,4 +1,22 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero project
+// Copyright (c) 2014-2018, The Forknote developers
+// Copyright (c) 2016-2018, The Karbowanec developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "NetNode.h"
 
@@ -116,7 +134,7 @@ namespace CryptoNote
         ss << pe.id << "\t" << pe.adr << " \tlast_seen: " << Common::timeIntervalToString(now_time - pe.last_seen) << std::endl;
       }
       return ss.str();
-	  }
+    }
 
 	std::string print_banlist_to_string(std::map<uint32_t, time_t> list) {
 	  auto now = time(nullptr);
@@ -342,8 +360,7 @@ namespace CryptoNote
   }
   
   //-----------------------------------------------------------------------------------
-  
-   bool NodeServer::block_host(const uint32_t address_ip, time_t seconds)
+  bool NodeServer::block_host(const uint32_t address_ip, time_t seconds)
   {
     m_blocked_hosts[address_ip] = time(nullptr) + seconds;
     // drop any connection to that IP
@@ -352,7 +369,7 @@ namespace CryptoNote
         context.m_state = CryptoNoteConnectionContext::state_shutdown;
       }
     });
-	logger(INFO) << "Host " << Common::ipAddressToString(address_ip) << " bloqueado.";
+	logger(INFO) << "Host " << Common::ipAddressToString(address_ip) << " blocked.";
 	return true;
   }
   //-----------------------------------------------------------------------------------
@@ -361,11 +378,11 @@ namespace CryptoNote
   {
     auto i = m_blocked_hosts.find(address_ip);
     if (i == m_blocked_hosts.end()) {
-      logger(INFO) << "Host " << Common::ipAddressToString(address_ip) << " no esta bloqueado.";
+      logger(INFO) << "Host " << Common::ipAddressToString(address_ip) << " is not blocked.";
       return false;
     }
     m_blocked_hosts.erase(i);
-    logger(INFO) << "Host " << Common::ipAddressToString(address_ip) << " desbloqueado.";
+    logger(INFO) << "Host " << Common::ipAddressToString(address_ip) << " unblocked.";
     return true;
   }
   //-----------------------------------------------------------------------------------
@@ -374,7 +391,7 @@ namespace CryptoNote
   {
     std::unique_lock<std::mutex> lock(mutex);
     uint64_t fails = ++m_host_fails_score[address_ip];
-    logger(DEBUGGING) << "Host " << Common::ipAddressToString(address_ip) << " puntaje fallido=" << fails;
+    logger(DEBUGGING) << "Host " << Common::ipAddressToString(address_ip) << " fail score=" << fails;
 	if (fails >= P2P_IP_FAILS_BEFORE_BLOCK)
     {
       auto i = m_host_fails_score.find(address_ip);
@@ -406,7 +423,7 @@ namespace CryptoNote
 	  std::unique_lock<std::mutex> lock(mutex);
 	  return block_host(address_ip, seconds);
   }
-   
+  
   bool NodeServer::unban_host(const uint32_t address_ip)
   {
 	  std::unique_lock<std::mutex> lock(mutex);
@@ -422,7 +439,6 @@ namespace CryptoNote
     context.m_state = CryptoNoteConnectionContext::state_shutdown;
   }
   //-----------------------------------------------------------------------------------
-
 
   bool NodeServer::handle_command_line(const boost::program_options::variables_map& vm)
   {
@@ -669,7 +685,7 @@ namespace CryptoNote
     }
 
     if (!handle_remote_peerlist(rsp.local_peerlist, rsp.node_data.local_time, context)) {
-		add_host_fail(context.m_remote_ip);
+      add_host_fail(context.m_remote_ip);
       logger(Logging::ERROR) << context << "COMMAND_HANDSHAKE: failed to handle_remote_peerlist(...), closing connection.";
       return false;
     }
@@ -896,10 +912,10 @@ namespace CryptoNote
       if(is_peer_used(pe))
         continue;
 
-	if (!is_remote_host_allowed(pe.adr.ip)) {
+	  if (!is_remote_host_allowed(pe.adr.ip)) {
 		  continue;
 	  }
-	
+
       logger(DEBUGGING) << "Selected peer: " << pe.id << " " << pe.adr << " [white=" << use_white_list
                     << "] last_seen: " << (pe.last_seen ? Common::timeIntervalToString(time(NULL) - pe.last_seen) : "never");
       
@@ -1233,16 +1249,16 @@ namespace CryptoNote
 		context.m_state = CryptoNoteConnectionContext::state_shutdown;
 		return 1;
 	}
-	
+
     if (arg.node_data.network_id != m_network_id) {
-		add_host_fail(context.m_remote_ip);
+      add_host_fail(context.m_remote_ip);
       logger(Logging::INFO) << context << "WRONG NETWORK AGENT CONNECTED! id=" << arg.node_data.network_id;
       context.m_state = CryptoNoteConnectionContext::state_shutdown;
       return 1;
     }
 
     if(!context.m_is_income) {
-		add_host_fail(context.m_remote_ip);
+      add_host_fail(context.m_remote_ip);
       logger(Logging::ERROR) << context << "COMMAND_HANDSHAKE came not from incoming connection";
       context.m_state = CryptoNoteConnectionContext::state_shutdown;
       return 1;
@@ -1310,13 +1326,13 @@ namespace CryptoNote
   
   bool NodeServer::log_banlist()
   {
-	  logger(INFO) << "Nodos baneados:" << ENDL << print_banlist_to_string(m_blocked_hosts) << ENDL;
+	  logger(INFO) << "Banned nodes:" << ENDL << print_banlist_to_string(m_blocked_hosts) << ENDL;
 	  return true;
   }
   //-----------------------------------------------------------------------------------
-  
+
   bool NodeServer::log_connections() {
-    logger(INFO) << "Conexiones: \r\n" << print_connections_container() ;
+    logger(INFO) << "Connections: \r\n" << print_connections_container() ;
     return true;
   }
   //-----------------------------------------------------------------------------------

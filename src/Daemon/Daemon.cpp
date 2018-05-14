@@ -1,4 +1,20 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2016, The Forknote developers
+// Copyright (c) 2016, The Karbowanec developers
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "version.h"
 
@@ -36,25 +52,25 @@ namespace po = boost::program_options;
 
 namespace
 {
-  const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", "Especifica archivo de configuracion", std::string(CryptoNote::CRYPTONOTE_NAME) + ".conf"};
+  const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", "Specify configuration file", std::string(CryptoNote::CRYPTONOTE_NAME) + ".conf"};
   const command_line::arg_descriptor<bool>        arg_os_version  = {"os-version", ""};
   const command_line::arg_descriptor<std::string> arg_log_file    = {"log-file", "", ""};
   const command_line::arg_descriptor<int>         arg_log_level   = {"log-level", "", 2}; // info level
-  const command_line::arg_descriptor<bool>        arg_console     = {"no-console", "Deshabilitar comandos de la consola daemon"};
-  const command_line::arg_descriptor<bool>        arg_restricted_rpc = {"restricted-rpc", "Restringir RPC para ver solo comandos, para evitar el abuso"};
-  const command_line::arg_descriptor<bool>        arg_enable_blockchain_indexes = { "enable-blockchain-indexes", "Habilitar indices blockchain", false };
-  const command_line::arg_descriptor<bool>        arg_print_genesis_tx = { "print-genesis-tx", "Imprime el bloque de genesis tx hex para insertarlo en la configuracion y las salidas" };
-  const command_line::arg_descriptor<std::string> arg_enable_cors = { "enable-cors", "Agrega el encabezado 'Access-Control-Allow-Origin' a las respuestas RPC del daemon. Utiliza el valor como dominio. Use * para todos", "" };
-  const command_line::arg_descriptor<std::string> arg_set_fee_address = { "fee-address", "Establece la direccion de la tarifa para billeteras livianas a las respuestas RPC del daemon", "" };
-  const command_line::arg_descriptor<bool>        arg_testnet_on  = {"testnet", "Se usa para implementar redes de prueba. Se ignoran los puntos de control y las semillas codificadas, "
-    "la identificacion de la red ha cambiado. uselo con la bandera --data-dir. La billetera debe ser lanzada con --testnet flag.", false};
+  const command_line::arg_descriptor<bool>        arg_console     = {"no-console", "Disable daemon console commands"};
+  const command_line::arg_descriptor<bool>        arg_restricted_rpc = {"restricted-rpc", "Restrict RPC to view only commands to prevent abuse"};
+  const command_line::arg_descriptor<bool>        arg_enable_blockchain_indexes = { "enable-blockchain-indexes", "Enable blockchain indexes", false };
+  const command_line::arg_descriptor<bool>        arg_print_genesis_tx = { "print-genesis-tx", "Prints genesis' block tx hex to insert it to config and exits" };
+  const command_line::arg_descriptor<std::string> arg_enable_cors = { "enable-cors", "Adds header 'Access-Control-Allow-Origin' to the daemon's RPC responses. Uses the value as domain. Use * for all", "" };
+  const command_line::arg_descriptor<std::string> arg_set_fee_address = { "fee-address", "Sets fee address for light wallets to the daemon's RPC responses.", "" };
+  const command_line::arg_descriptor<bool>        arg_testnet_on  = {"testnet", "Used to deploy test nets. Checkpoints and hardcoded seeds are ignored, "
+    "network id is changed. Use it with --data-dir flag. The wallet must be launched with --testnet flag.", false};
 }
 
 bool command_line_preprocessor(const boost::program_options::variables_map& vm, LoggerRef& logger);
 void print_genesis_tx_hex(const po::variables_map& vm, LoggerManager& logManager) {
   CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction();
   std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
-  std::cout << "Agregue esta linea en su archivo de configuracion de monedas como esta: " << std::endl;
+  std::cout << "Add this line into your coin configuration file as is: " << std::endl;
   std::cout << "\"GENESIS_COINBASE_TX_HEX\":\"" << tx_hex << "\"," << std::endl;
   return;
 }
@@ -91,8 +107,8 @@ int main(int argc, char* argv[])
 
   try {
 
-    po::options_description desc_cmd_only("Opciones de linea de comando");
-    po::options_description desc_cmd_sett("Opciones de linea de comando y opciones de configuracion");
+    po::options_description desc_cmd_only("Command line options");
+    po::options_description desc_cmd_sett("Command line options and settings options");
 
     command_line::add_arg(desc_cmd_only, command_line::arg_help);
     command_line::add_arg(desc_cmd_only, command_line::arg_version);
@@ -116,7 +132,7 @@ int main(int argc, char* argv[])
     NetNodeConfig::initOptions(desc_cmd_sett);
     MinerConfig::initOptions(desc_cmd_sett);
 
-    po::options_description desc_options("Opciones permitidas");
+    po::options_description desc_options("Allowed options");
     desc_options.add(desc_cmd_only).add(desc_cmd_sett);
 
     po::variables_map vm;
@@ -177,20 +193,20 @@ int main(int argc, char* argv[])
       return 0;
     }
 
-    logger(INFO) << "Carpeta del modulo: " << argv[0];
+    logger(INFO) << "Module folder: " << argv[0];
 
     bool testnet_mode = command_line::get_arg(vm, arg_testnet_on);
     if (testnet_mode) {
-      logger(INFO) << "Comenzando en el modo testnet!";
+      logger(INFO) << "Starting in testnet mode!";
     }
 
-    //crear objetos y vincularlos
+    //create objects and link them
     CryptoNote::CurrencyBuilder currencyBuilder(logManager);
     currencyBuilder.testnet(testnet_mode);
     try {
       currencyBuilder.currency();
     } catch (std::exception&) {
-      std::cout << "GENESIS_COINBASE_TX_HEX la constante tiene un valor incorrecto. Por favor inicie: " << CryptoNote::CRYPTONOTE_NAME << "d --" << arg_print_genesis_tx.name;
+      std::cout << "GENESIS_COINBASE_TX_HEX constant has an incorrect value. Please launch: " << CryptoNote::CRYPTONOTE_NAME << "d --" << arg_print_genesis_tx.name;
       return 1;
     }
     CryptoNote::Currency currency = currencyBuilder.currency();
@@ -217,11 +233,11 @@ int main(int argc, char* argv[])
 
     if (!coreConfig.configFolderDefaulted) {
       if (!Tools::directoryExists(coreConfig.configFolder)) {
-        throw std::runtime_error("El directorio no existe: " + coreConfig.configFolder);
+        throw std::runtime_error("Directory does not exist: " + coreConfig.configFolder);
       }
     } else {
       if (!Tools::create_directories_if_necessary(coreConfig.configFolder)) {
-        throw std::runtime_error("No se puede crear el directorio: " + coreConfig.configFolder);
+        throw std::runtime_error("Can't create directory: " + coreConfig.configFolder);
       }
     }
 
@@ -236,12 +252,12 @@ int main(int argc, char* argv[])
     DaemonCommandsHandler dch(ccore, p2psrv, logManager);
 
     // initialize objects
-    logger(INFO) << "Inicializando el servidor p2p...";
+    logger(INFO) << "Initializing p2p server...";
     if (!p2psrv.init(netNodeConfig)) {
-      logger(ERROR, BRIGHT_RED) << "Error al inicializar el servidor p2p.";
+      logger(ERROR, BRIGHT_RED) << "Failed to initialize p2p server.";
       return 1;
     }
-    logger(INFO) << "Servidor P2P inicializado OK";
+    logger(INFO) << "P2p server initialized OK";
 
     //logger(INFO) << "Initializing core rpc server...";
     //if (!rpc_server.init(vm)) {
@@ -251,55 +267,55 @@ int main(int argc, char* argv[])
     // logger(INFO, BRIGHT_GREEN) << "Core rpc server initialized OK on port: " << rpc_server.get_binded_port();
 
     // initialize core here
-    logger(INFO) << "Inicializando el nucleo...";
+    logger(INFO) << "Initializing core...";
     if (!ccore.init(coreConfig, minerConfig, true)) {
-      logger(ERROR, BRIGHT_RED) << "Error al inicializar el nucleo";
+      logger(ERROR, BRIGHT_RED) << "Failed to initialize core";
       return 1;
     }
-    logger(INFO) << "Nucleo inicializado OK";
+    logger(INFO) << "Core initialized OK";
 
     // start components
     if (!command_line::has_arg(vm, arg_console)) {
       dch.start_handling();
     }
 
-    logger(INFO) << "Iniciando el servidor core rpc en la direccion " << rpcConfig.getBindAddress();
+    logger(INFO) << "Starting core rpc server on address " << rpcConfig.getBindAddress();
     rpcServer.start(rpcConfig.bindIp, rpcConfig.bindPort);
 	rpcServer.restrictRPC(command_line::get_arg(vm, arg_restricted_rpc));
 	rpcServer.enableCors(command_line::get_arg(vm, arg_enable_cors));
 	rpcServer.setFeeAddress(command_line::get_arg(vm, arg_set_fee_address));
-    logger(INFO) << "El servidor Core rpc comenzo ok";
+    logger(INFO) << "Core rpc server started ok";
 
     Tools::SignalHandler::install([&dch, &p2psrv] {
       dch.stop_handling();
       p2psrv.sendStopSignal();
     });
 
-    logger(INFO) << "Iniciando p2p net loop...";
+    logger(INFO) << "Starting p2p net loop...";
     p2psrv.run();
-    logger(INFO) << "p2p net loop detenido";
+    logger(INFO) << "p2p net loop stopped";
 
     dch.stop_handling();
 
     //stop components
-    logger(INFO) << "Deteniendo servidor core rpc...";
+    logger(INFO) << "Stopping core rpc server...";
     rpcServer.stop();
 
     //deinitialize components
-    logger(INFO) << "Desinicializando nucleo...";
+    logger(INFO) << "Deinitializing core...";
     ccore.deinit();
-    logger(INFO) << "Desinicializando p2p...";
+    logger(INFO) << "Deinitializing p2p...";
     p2psrv.deinit();
 
     ccore.set_cryptonote_protocol(NULL);
     cprotocol.set_p2p_endpoint(NULL);
 
   } catch (const std::exception& e) {
-    logger(ERROR, BRIGHT_RED) << "Excepcion: " << e.what();
+    logger(ERROR, BRIGHT_RED) << "Exception: " << e.what();
     return 1;
   }
 
-  logger(INFO) << "El nodo se detuvo.";
+  logger(INFO) << "Node stopped.";
   return 0;
 }
 

@@ -1,6 +1,6 @@
 Logico es un proyecto creado por estudiantes para estudiantes.
 
-## Compilando Logicoin
+## Compilando Logico
 
 ### En *nix
 

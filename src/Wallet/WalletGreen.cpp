@@ -1,4 +1,19 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "WalletGreen.h"
 
@@ -162,6 +177,7 @@ void WalletGreen::initializeWithViewKey(const std::string& path, const std::stri
   initWithKeys(path, password, viewPublicKey, viewSecretKey);
   m_logger(INFO, BRIGHT_WHITE) << "Container initialized with view secret key, public view key " << viewPublicKey;
 }
+
 void WalletGreen::initializeWithViewKeyAndTimestamp(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey, const uint64_t& creationTimestamp) {
   Crypto::PublicKey viewPublicKey;
   if (!Crypto::secret_key_to_public_key(viewSecretKey, viewPublicKey)) {
@@ -340,6 +356,7 @@ void WalletGreen::initWithKeys(const std::string& path, const std::string& passw
 
   m_state = WalletState::INITIALIZED;
 }
+
 void WalletGreen::initWithKeysAndTimestamp(const std::string& path, const std::string& password,
   const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey, const uint64_t& _creationTimestamp) {
 
@@ -959,10 +976,11 @@ std::string WalletGreen::createAddress(const Crypto::SecretKey& spendSecretKey, 
     m_logger(ERROR, BRIGHT_RED) << "createAddress(" << spendSecretKey << ") Failed to convert secret key to public key";
     throw std::system_error(make_error_code(CryptoNote::error::KEY_GENERATION_ERROR));
   }
-
   uint64_t creationTimestamp = reset ? 0 : static_cast<uint64_t>(time(nullptr));
+
   return doCreateAddress(spendPublicKey, spendSecretKey, creationTimestamp);
 }
+
 std::string WalletGreen::createAddressWithTimestamp(const Crypto::SecretKey& spendSecretKey, const uint64_t& creationTimestamp) {
   Crypto::PublicKey spendPublicKey;
   if (!Crypto::secret_key_to_public_key(spendSecretKey, spendPublicKey)) {

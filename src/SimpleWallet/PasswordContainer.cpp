@@ -1,4 +1,19 @@
-// Copyright (c) 2018, Logicoin
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
+//
+// This file is part of Bytecoin.
+//
+// Bytecoin is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Bytecoin is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "PasswordContainer.h"
 
@@ -78,7 +93,7 @@ namespace Tools
     bool r;
     if (is_cin_tty())
     {
-      std::cout << "contraseña: ";
+      std::cout << "password: ";
       if (verify)
       {
         std::string password1;
@@ -86,7 +101,7 @@ namespace Tools
         r = read_from_tty(password1);
         if (r)
         {
-          std::cout << "Confirme contraseña: ";
+          std::cout << "confirm password: ";
           r = read_from_tty(password2);
           if (r)
           {
@@ -98,7 +113,7 @@ namespace Tools
             }
             else
             {
-              std::cout << "Las contraseñas no coinciden, intente de nuevo." << std::endl;
+              std::cout << "Passwords do not match, try again." << std::endl;
               clear();
               return read_password(true);
             }
