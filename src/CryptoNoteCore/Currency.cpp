@@ -111,7 +111,6 @@ namespace CryptoNote {
 		if (m_testnet) {
 			++m_genesisBlock.nonce;
 		}
-		//miner::find_nonce_for_given_block(bl, 1, 0);
 
 		return true;
 	}
@@ -540,11 +539,11 @@ namespace CryptoNote {
 		// Karbowanec, Masari, Bitcoin Gold, and Bitcoin Cash have contributed.
 		// See https://github.com/zawy12/difficulty-algorithms/issues/1 for other algos.
 		// Do not use "if solvetime < 0 then solvetime = 1" which allows a catastrophic exploit.
-		// T= target_solvetime; = 300 
+		// T= target_solvetime; = 300 para version 3
 		// N = int(45 * (600 / T) ^ 0.3));
 		
 		const int64_t T = 360; //tiempo del bloque para la version 3
-		size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
+		size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3; //52
 
 		// return a difficulty of 1 for first 3 blocks if it's the start of the chain
 		if (timestamps.size() < 4) {
