@@ -26,18 +26,19 @@
 namespace CryptoNote {
 namespace parameters {
 
-const uint64_t DIFFICULTY_TARGET                             = 16; // seconds
+const uint64_t DIFFICULTY_TARGET                             = 16; // segundos, version 1 y 2
+const uint64_t DIFFICULTY_TARGET_V3                          = 360; // segundos, version 3
 const uint64_t CRYPTONOTE_MAX_BLOCK_NUMBER                   = 500000000;
 const size_t   CRYPTONOTE_MAX_BLOCK_BLOB_SIZE                = 500000000;
 const size_t   CRYPTONOTE_MAX_TX_SIZE                        = 1000000000;
 const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX       = 0x3055; // empieza con ch
-const size_t   CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 10;
+const size_t   CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 1;
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = DIFFICULTY_TARGET * 7;
 const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW             = 60;
 
 // MONEY_SUPPLY - total number coins to be generated
 const uint64_t MONEY_SUPPLY                                  = UINT64_C(10000000000000000);
-const uint64_t TAIL_EMISSION_REWARD                          = UINT64_C(304414003);
+const uint64_t TAIL_EMISSION_REWARD                          = UINT64_C(600000000);//recompensa v3 6 logico por bloque
 const size_t CRYPTONOTE_COIN_VERSION                         = 1;
 const unsigned EMISSION_SPEED_FACTOR                         = 20;
 static_assert(EMISSION_SPEED_FACTOR <= 8 * sizeof(uint64_t), "Bad EMISSION_SPEED_FACTOR");
@@ -56,7 +57,7 @@ const uint64_t MAX_TX_MIXIN_SIZE                             = 20;
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
 const size_t   DIFFICULTY_WINDOW                             = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY; // blocks
 const size_t   DIFFICULTY_WINDOW_V2                          = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
-const size_t   DIFFICULTY_WINDOW_V3                          = 60;  // blocks
+const size_t   DIFFICULTY_WINDOW_V3                          = 52;  // blocks
 const size_t   DIFFICULTY_CUT                                = 60;  // timestamps to cut after sorting
 const size_t   DIFFICULTY_LAG                                = 15;  // !!!
 static_assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2, "Bad DIFFICULTY_WINDOW or DIFFICULTY_CUT");
@@ -77,7 +78,7 @@ const size_t   FUSION_TX_MIN_INPUT_COUNT                     = 12;
 const size_t   FUSION_TX_MIN_IN_OUT_COUNT_RATIO              = 4;
 
 const uint32_t UPGRADE_HEIGHT_V2                             = 60000;
-const uint32_t UPGRADE_HEIGHT_V3                             = 4294967294;
+const uint32_t UPGRADE_HEIGHT_V3                             = 600000;
 const unsigned UPGRADE_VOTING_THRESHOLD                      = 90; // percent
 const uint32_t UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
 const uint32_t UPGRADE_WINDOW                                = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
@@ -132,8 +133,7 @@ const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "8f80f9a5a434a9f1
 
 const char* const SEED_NODES[] = { 
  "nodo.logicoin.co:1337",
-  "35.229.60.121:1337",
-  "35.199.63.34:1337"
+ "udpool.logicoin.co:1337"
 };
 
 struct CheckpointData {
@@ -144,7 +144,11 @@ struct CheckpointData {
 const std::initializer_list<CheckpointData> CHECKPOINTS = { 
 {5467,	"fde0e887a0a5704b49b2cb3537d8bb8fc5ff143bdc30c6aa51bccaab4cc6d6f0"},
 {11456,	"225886de30ae7e204c17a7a9a44a0139dedc5fcf7ec9ae9cc92b8a979fdd202c"},
-{20782,	"a321fbf781d1ef06986ea493112f68e84ad355a066844c2d841c9dd1cd437eeb"}
+{20782,	"a321fbf781d1ef06986ea493112f68e84ad355a066844c2d841c9dd1cd437eeb"},
+{45729,	"c95f94e0bd53448b8014e0f51badd16af78284f4d2a5cff44df2952c4b6fec59"},
+{86308,	"479cc33f3a2c76993e8238dfa23ddc394c3d035498ca0c7c5fbc2f088165dbde"},
+{167487,"73a67d38f8653b71fd1f5174e6a824b7aa70e6a01d11fdbad6305c85616baba7"},
+{324567,"a2626ba4a5ed3a12b4c64c1ee2f522a4b41b2dc6c78f318657bd7890d915aa65"}
 };
 
 }

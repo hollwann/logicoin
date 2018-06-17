@@ -142,16 +142,17 @@ namespace CryptoNote {
 
 	bool Currency::getBlockReward(uint8_t blockMajorVersion, size_t medianSize, size_t currentBlockSize, uint64_t alreadyGeneratedCoins,
 		uint64_t fee, uint64_t& reward, int64_t& emissionChange) const {
-		// assert(alreadyGeneratedCoins <= m_moneySupply);
+			
 		assert(m_emissionSpeedFactor > 0 && m_emissionSpeedFactor <= 8 * sizeof(uint64_t));
 
-		// Tail emission
-
 		uint64_t baseReward = (m_moneySupply - alreadyGeneratedCoins) >> m_emissionSpeedFactor;
-		if (alreadyGeneratedCoins + CryptoNote::parameters::TAIL_EMISSION_REWARD >= m_moneySupply || baseReward < CryptoNote::parameters::TAIL_EMISSION_REWARD)
+		
+		// Emision luego del bloque 600000
+		if (alreadyGeneratedCoins >= 4357205733657691 )
 		{
 			baseReward = CryptoNote::parameters::TAIL_EMISSION_REWARD;
 		}
+		
         //arreglo consensado por los actuales mineros debido a un error de capa 8 en el bloque 33326
 		else if( alreadyGeneratedCoins >= 312824207175783 && alreadyGeneratedCoins <= 312825207175783)
 		{
@@ -539,10 +540,10 @@ namespace CryptoNote {
 		// Karbowanec, Masari, Bitcoin Gold, and Bitcoin Cash have contributed.
 		// See https://github.com/zawy12/difficulty-algorithms/issues/1 for other algos.
 		// Do not use "if solvetime < 0 then solvetime = 1" which allows a catastrophic exploit.
-		// T= target_solvetime;
+		// T= target_solvetime; = 300 
 		// N = int(45 * (600 / T) ^ 0.3));
-
-		const int64_t T = static_cast<int64_t>(m_difficultyTarget);
+		
+		const int64_t T = 360; //tiempo del bloque para la version 3
 		size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
 
 		// return a difficulty of 1 for first 3 blocks if it's the start of the chain
@@ -585,8 +586,8 @@ namespace CryptoNote {
 		next_difficulty = static_cast<uint64_t>(nextDifficulty);
 		
 		// minimum limit
-		if (next_difficulty < 100000) {
-			next_difficulty = 100000;
+		if (next_difficulty < 360) {
+			next_difficulty = 360;
 		}
 
 		return next_difficulty;
