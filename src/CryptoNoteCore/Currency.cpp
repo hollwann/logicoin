@@ -265,7 +265,13 @@ namespace CryptoNote {
 
 		tx.version = CURRENT_TRANSACTION_VERSION;
 		//lock
+		//debloqueo cambiado a 0 despues del bloque 600000
+		if(height > 600000){
+			tx.unlockTime = height;
+		}
+		else{	
 		tx.unlockTime = height + m_minedMoneyUnlockWindow;
+		}
 		tx.inputs.push_back(in);
 		return true;
 	}
