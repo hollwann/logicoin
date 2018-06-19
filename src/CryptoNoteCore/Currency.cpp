@@ -545,7 +545,7 @@ namespace CryptoNote {
 		// Karbowanec, Masari, Bitcoin Gold, and Bitcoin Cash have contributed.
 		// See https://github.com/zawy12/difficulty-algorithms/issues/1 for other algos.
 		// Do not use "if solvetime < 0 then solvetime = 1" which allows a catastrophic exploit.
-		// T= target_solvetime; = 300 para version 3
+		// T= target_solvetime; = 360 para version 3
 		// N = int(45 * (600 / T) ^ 0.3));
 		
 		const int64_t T = 360; //tiempo del bloque para la version 3
